@@ -1,12 +1,10 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"image"
 	"image/draw"
 	"image/png"
-	"io/ioutil"
 	"log"
 	"math"
 	"net/http"
@@ -110,8 +108,8 @@ func (m TrafficMap) prepareWorkers(in <-chan mapRequest, out chan<- mapResponse)
 			var resp *http.Response
 			resp, res.err = http.Get(req.url)
 			if res.err == nil {
-				body, _ := ioutil.ReadAll(resp.Body)
-				res.img, res.err = png.Decode(bytes.NewReader(body))
+				// body, _ := ioutil.ReadAll(resp.Body)
+				res.img, res.err = png.Decode(resp.Body)
 			}
 			out <- res
 		}
