@@ -17,3 +17,5 @@ main
 
 # Output directories
 map/
+
+.vscode/
