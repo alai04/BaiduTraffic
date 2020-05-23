@@ -1,0 +1,9 @@
+version: '3.5'
+services:
+  crawling:
+    build: .
+    image: "alai04/crawling"
+    volumes:
+      - ./map:/opt/crawling/map
+    command: [./crawling] 
+    restart: always
