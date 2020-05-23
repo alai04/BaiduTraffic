@@ -1,9 +1,13 @@
 version: '3.5'
 services:
   crawling:
-    build: .
+    build: crawling
     image: "alai04/crawling"
     volumes:
       - ./map:/opt/crawling/map
     command: [./crawling] 
     restart: always
+
+  # filesrv:
+  #   build: filesrv
+  #   image: "alai04/filesrv"
