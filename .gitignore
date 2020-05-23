@@ -5,6 +5,7 @@
 *.so
 *.dylib
 main
+crawling/crawling
 
 # Test binary, built with `go test -c`
 *.test
@@ -19,3 +20,4 @@ main
 map/
 
 .vscode/
+.DS_Store
