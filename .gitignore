@@ -6,6 +6,7 @@
 *.dylib
 main
 crawling/crawling
+filesrv/filesrv
 
 # Test binary, built with `go test -c`
 *.test
