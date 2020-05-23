@@ -19,8 +19,14 @@ const (
 	fileNameFormat     = "L%d_%s.png"
 )
 
-func findFile(level int, tm time.Time, deviation int) (res stFile, err error) {
-	fn, tm := findNearestFile(level, tm)
+type fileFinder struct {
+	level     int
+	tm        time.Time
+	deviation int
+}
+
+func (ff fileFinder) findFile() (res stFile, err error) {
+	fn, tm := ff.findNearestFile()
 	if fn == "" {
 		return res, fmt.Errorf("cannot find image")
 	}
@@ -29,10 +35,9 @@ func findFile(level int, tm time.Time, deviation int) (res stFile, err error) {
 	return
 }
 
-func findNearestFile(level int, tm time.Time) (fn string, ftm time.Time) {
-	fmt.Printf("tm=%v", tm)
+func (ff fileFinder) findNearestFile() (fn string, ftm time.Time) {
 	diffMin := float64(time.Duration(1<<63 - 1))
-	filePrefix := fmt.Sprintf("L%d_", level)
+	filePrefix := fmt.Sprintf("L%d_", ff.level)
 	filepath.Walk(fileDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			fmt.Printf("prevent panic by handling failure accessing a path %q: %v\n", path, err)
@@ -40,12 +45,11 @@ func findNearestFile(level int, tm time.Time) (fn string, ftm time.Time) {
 		}
 		fnCur := info.Name()
 		if !info.IsDir() && strings.HasPrefix(fnCur, filePrefix) {
-			// fmt.Printf("find %v\n", fnCur)
 			tmCur, err := fileTime(fnCur)
 			if err != nil {
 				fmt.Printf("get time from filename %q error: %v\n", fnCur, err)
 			}
-			diff := math.Abs(float64(tm.Sub(tmCur)))
+			diff := math.Abs(float64(ff.tm.Sub(tmCur)))
 			if diff < diffMin {
 				diffMin = diff
 				fn = fnCur
@@ -54,6 +58,9 @@ func findNearestFile(level int, tm time.Time) (fn string, ftm time.Time) {
 		}
 		return nil
 	})
+	if diffMin > float64(time.Duration(ff.deviation)*time.Second) {
+		return "", ftm
+	}
 	return fn, ftm
 }
 

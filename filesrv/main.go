@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -16,6 +17,7 @@ const (
 
 func main() {
 	r := gin.Default()
+	r.Use(cors.Default())
 	r.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"message": "pong",
@@ -58,7 +60,8 @@ func handleTraffic(c *gin.Context) {
 		return
 	}
 
-	obj, err := findFile(level, tm, deviation)
+	ff := fileFinder{level, tm, deviation}
+	obj, err := ff.findFile()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
