@@ -8,6 +8,14 @@ services:
     command: [./crawling] 
     restart: always
 
-  # filesrv:
-  #   build: filesrv
-  #   image: "alai04/filesrv"
+  filesrv:
+    build: filesrv
+    image: "alai04/filesrv"
+    environment:
+      - MAP_DIR=/opt/filesrv/map/
+    ports: 
+      - "8080:8080"
+    volumes:
+      - ./map:/opt/filesrv/map
+    command: [./filesrv] 
+    restart: always

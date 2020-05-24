@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 
@@ -12,7 +13,10 @@ import (
 
 const (
 	dateTimeFormat = "20060102150405"
-	fileDir        = "../map/"
+)
+
+var (
+	fileDir string
 )
 
 func main() {
@@ -74,4 +78,8 @@ func handleTraffic(c *gin.Context) {
 		"msg":     "",
 		"obj":     obj,
 	})
+}
+
+func init() {
+	fileDir = os.Getenv("MAP_DIR")
 }
