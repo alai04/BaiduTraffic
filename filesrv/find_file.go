@@ -52,7 +52,7 @@ func (ff fileFinder) findNearestFile() (fn string, ftm time.Time) {
 			diff := math.Abs(float64(ff.tm.Sub(tmCur)))
 			if diff < diffMin {
 				diffMin = diff
-				fn = fnCur
+				fn = path[len(fileDir):]
 				ftm = tmCur
 			}
 		}
