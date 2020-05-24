@@ -4,7 +4,14 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"os"
+	"strconv"
 	"time"
+)
+
+const (
+	envWorkers  = "CRAWLING_WORKERS"
+	envMaxLevel = "CRAWLING_MAXLEVEL"
 )
 
 type config struct {
@@ -43,11 +50,19 @@ func test(cfg config) {
 }
 
 func loop() {
-	workers := 10
+	workers, _ := strconv.Atoi(os.Getenv(envWorkers))
+	if workers < 1 || workers > 20 {
+		workers = 10
+	}
+	maxLevel, _ := strconv.Atoi(os.Getenv(envMaxLevel))
+	if maxLevel < 9 || workers > 15 {
+		maxLevel = 11
+	}
+
 	for {
 		tBegin := time.Now()
 		tNext := tBegin.Add(time.Minute)
-		for l := 9; l < 13; l++ {
+		for l := 9; l <= maxLevel; l++ {
 			m := NewTrafficMap(l, workers)
 			fn, err := m.GetMap()
 			if err == nil {
