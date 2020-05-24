@@ -9,6 +9,7 @@ import (
 	"math"
 	"net/http"
 	"os"
+	"path/filepath"
 	"sync"
 	"time"
 )
@@ -94,7 +95,7 @@ func (m TrafficMap) GetMap() (mapFilename string, err error) {
 	log.Println("close(chResponse)")
 	<-done
 	log.Printf("Small images request: %d, error: %d", n, m.nErr)
-	mapFilename = fmt.Sprintf("map/L%d_%v.png", m.level, tmStr)
+	mapFilename = filepath.Join(fileDir, fmt.Sprintf("L%d_%v.png", m.level, tmStr))
 	out, _ := os.Create(mapFilename)
 	defer out.Close()
 	png.Encode(out, m.result)

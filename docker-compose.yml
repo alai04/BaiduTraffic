@@ -6,6 +6,7 @@ services:
     environment:
       - CRAWLING_WORKERS=10
       - CRAWLING_MAXLEVEL=11
+      - MAP_DIR=/opt/crawling/map/
     volumes:
       - ./map:/opt/crawling/map
     command: [./crawling] 

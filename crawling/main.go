@@ -12,6 +12,11 @@ import (
 const (
 	envWorkers  = "CRAWLING_WORKERS"
 	envMaxLevel = "CRAWLING_MAXLEVEL"
+	envFileDir  = "MAP_DIR"
+)
+
+var (
+	fileDir string
 )
 
 type config struct {
@@ -78,4 +83,8 @@ func loop() {
 			time.Sleep(d)
 		}
 	}
+}
+
+func init() {
+	fileDir = os.Getenv(envFileDir)
 }
