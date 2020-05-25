@@ -95,7 +95,11 @@ func (m TrafficMap) GetMap() (mapFilename string, err error) {
 	log.Println("close(chResponse)")
 	<-done
 	log.Printf("Small images request: %d, error: %d", n, m.nErr)
-	mapFilename = filepath.Join(fileDir, fmt.Sprintf("L%d_%v.png", m.level, tmStr))
+	if m.nErr > n/2 {
+		return "", fmt.Errorf("Too many error, skip the map")
+	} else {
+		mapFilename = filepath.Join(fileDir, fmt.Sprintf("L%d_%v.png", m.level, tmStr))
+	}
 	out, _ := os.Create(mapFilename)
 	defer out.Close()
 	png.Encode(out, m.result)
@@ -122,7 +126,7 @@ func (m TrafficMap) prepareWorkers(in <-chan mapRequest, out chan<- mapResponse)
 	}
 }
 
-func (m TrafficMap) pasteImages(done chan<- struct{}, ch <-chan mapResponse) {
+func (m *TrafficMap) pasteImages(done chan<- struct{}, ch <-chan mapResponse) {
 	for res := range ch {
 		if res.err == nil {
 			dp := image.Pt(res.x*xSmallSize, res.y*ySmallSize)
