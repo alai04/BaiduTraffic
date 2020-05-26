@@ -97,9 +97,9 @@ func (m TrafficMap) GetMap() (mapFilename string, err error) {
 	log.Printf("Small images request: %d, error: %d", n, m.nErr)
 	if m.nErr > n/2 {
 		return "", fmt.Errorf("Too many error, skip the map")
-	} else {
-		mapFilename = filepath.Join(fileDir, fmt.Sprintf("L%d_%v.png", m.level, tmStr))
 	}
+
+	mapFilename = filepath.Join(fileDir, fmt.Sprintf("L%d_%v.png", m.level, tmStr))
 	out, _ := os.Create(mapFilename)
 	defer out.Close()
 	png.Encode(out, m.result)
