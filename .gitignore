@@ -7,6 +7,8 @@
 main
 crawling/crawling*
 filesrv/filesrv*
+adjust/adjust
+adjust/adjust-*
 
 # Test binary, built with `go test -c`
 *.test
@@ -25,3 +27,5 @@ map/
 config.md
 scripts/
 *.service
+adjust/*map/
+*.png
