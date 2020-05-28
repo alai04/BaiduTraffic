@@ -11,11 +11,18 @@ services:
   filesrv:
     build: filesrv
     image: "alai04/filesrv"
-    environment:
-      - MAP_DIR=/opt/filesrv/map/
     ports: 
       - "8080:8080"
     volumes:
-      - ./map:/opt/filesrv/map
-    command: [./filesrv] 
+      - ./dstmap:/opt/filesrv/map
+    command: ["./filesrv", "-d", "/opt/filesrv/map/"] 
+    restart: always
+
+  adjust:
+    build: adjust
+    image: "alai04/adjust"
+    volumes:
+      - ./map:/opt/adjust/srcmap
+      - ./dstmap:/opt/adjust/dstmap
+    command: ["./adjust", "-sd", "/opt/adjust/srcmap", "-dd", "/opt/adjust/dstmap"] 
     restart: always
