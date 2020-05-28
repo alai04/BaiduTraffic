@@ -3,13 +3,9 @@ services:
   crawling:
     build: crawling
     image: "alai04/crawling"
-    environment:
-      - CRAWLING_WORKERS=10
-      - CRAWLING_MAXLEVEL=11
-      - MAP_DIR=/opt/crawling/map/
     volumes:
       - ./map:/opt/crawling/map
-    command: [./crawling] 
+    command: ["./crawling", "-d", "/opt/crawling/map", "-w", "10", "-l", "11"] 
     restart: always
 
   filesrv:

@@ -28,6 +28,7 @@ const (
 type TrafficMap struct {
 	level   int
 	workers int
+	fileDir string
 	wg      *sync.WaitGroup
 	result  draw.Image
 	nErr    int
@@ -47,10 +48,11 @@ type mapResponse struct {
 }
 
 // NewTrafficMap return a struct TrafficMap with level & workers
-func NewTrafficMap(level int, workers int) *TrafficMap {
+func NewTrafficMap(level int, workers int, fileDir string) *TrafficMap {
 	return &TrafficMap{
 		level:   level,
 		workers: workers,
+		fileDir: fileDir,
 		wg:      new(sync.WaitGroup),
 	}
 }
@@ -99,11 +101,12 @@ func (m TrafficMap) GetMap() (mapFilename string, err error) {
 		return "", fmt.Errorf("Too many error, skip the map")
 	}
 
-	mapFilename = filepath.Join(fileDir, fmt.Sprintf("L%d_%v.png", m.level, tmStr))
-	out, _ := os.Create(mapFilename)
-	defer out.Close()
+	mapFilename = filepath.Join(m.fileDir, fmt.Sprintf("L%d_%v.png", m.level, tmStr))
+	tFilename := filepath.Join(m.fileDir, tmpFilename)
+	out, _ := os.Create(tFilename)
 	png.Encode(out, m.result)
-	return mapFilename, nil
+	out.Close()
+	return mapFilename, os.Rename(tFilename, mapFilename)
 }
 
 func (m TrafficMap) prepareWorkers(in <-chan mapRequest, out chan<- mapResponse) {

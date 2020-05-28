@@ -11,4 +11,4 @@ ADD *.go /opt/crawling/
 ADD go.* /opt/crawling/
 RUN go build
 
-CMD ./crawling
+CMD ["./crawling", "-t"]

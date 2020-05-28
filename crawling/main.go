@@ -4,25 +4,20 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"os"
-	"strconv"
 	"time"
 )
 
 const (
-	envWorkers  = "CRAWLING_WORKERS"
-	envMaxLevel = "CRAWLING_MAXLEVEL"
-	envFileDir  = "MAP_DIR"
-)
-
-var (
-	fileDir string
+	defaultWorkers  = 10
+	defaultMaxLevel = 11
+	tmpFilename     = ".__tmp__.png"
 )
 
 type config struct {
 	test    bool
 	level   int
 	workers int
+	fileDir string
 }
 
 func main() {
@@ -31,21 +26,22 @@ func main() {
 		test(cfg)
 	} else {
 		fmt.Println("Run as deamon, Crtl-C to exit ...")
-		loop()
+		loop(cfg)
 	}
 }
 
 func parse() config {
 	var cfg config
 	flag.BoolVar(&cfg.test, "t", false, "test mode")
-	flag.IntVar(&cfg.level, "l", 9, "level of map")
+	flag.IntVar(&cfg.level, "l", 9, "max level of map, or level of map for test")
 	flag.IntVar(&cfg.workers, "w", 1, "num of workers")
+	flag.StringVar(&cfg.fileDir, "d", "./", "directory of output")
 	flag.Parse()
 	return cfg
 }
 
 func test(cfg config) {
-	m := NewTrafficMap(cfg.level, cfg.workers)
+	m := NewTrafficMap(cfg.level, cfg.workers, cfg.fileDir)
 	fn, err := m.GetMap()
 	if err == nil {
 		log.Printf("Traffic map save to: %v", fn)
@@ -54,21 +50,21 @@ func test(cfg config) {
 	}
 }
 
-func loop() {
-	workers, _ := strconv.Atoi(os.Getenv(envWorkers))
+func loop(cfg config) {
+	workers := cfg.workers
 	if workers < 1 || workers > 20 {
-		workers = 10
+		workers = defaultWorkers
 	}
-	maxLevel, _ := strconv.Atoi(os.Getenv(envMaxLevel))
+	maxLevel := cfg.level
 	if maxLevel < 9 || workers > 15 {
-		maxLevel = 11
+		maxLevel = defaultMaxLevel
 	}
 
 	for {
 		tBegin := time.Now()
 		tNext := tBegin.Add(time.Minute)
 		for l := 9; l <= maxLevel; l++ {
-			m := NewTrafficMap(l, workers)
+			m := NewTrafficMap(l, workers, cfg.fileDir)
 			fn, err := m.GetMap()
 			if err == nil {
 				log.Printf("Traffic map save to: %v", fn)
@@ -83,8 +79,4 @@ func loop() {
 			time.Sleep(d)
 		}
 	}
-}
-
-func init() {
-	fileDir = os.Getenv(envFileDir)
 }
