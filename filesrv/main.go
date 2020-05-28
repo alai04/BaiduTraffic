@@ -1,9 +1,9 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"net/http"
-	"os"
 	"strconv"
 	"time"
 
@@ -81,5 +81,6 @@ func handleTraffic(c *gin.Context) {
 }
 
 func init() {
-	fileDir = os.Getenv("MAP_DIR")
+	flag.StringVar(&fileDir, "d", "./", "directory for serve")
+	flag.Parse()
 }
