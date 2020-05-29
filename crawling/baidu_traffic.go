@@ -118,6 +118,7 @@ func (m TrafficMap) prepareWorkers(in <-chan mapRequest, out chan<- mapResponse)
 			if res.err == nil {
 				// body, _ := ioutil.ReadAll(resp.Body)
 				res.img, res.err = png.Decode(resp.Body)
+				resp.Body.Close()
 			}
 			out <- res
 		}
