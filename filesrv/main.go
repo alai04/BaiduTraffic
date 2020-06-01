@@ -54,7 +54,7 @@ func handleTraffic(c *gin.Context) {
 		return
 	}
 
-	deviationParam := c.DefaultQuery("deviation", "60")
+	deviationParam := c.DefaultQuery("deviation", "300")
 	deviation, err := strconv.Atoi(deviationParam)
 	if err != nil || deviation < 0 || deviation > 900 {
 		c.JSON(http.StatusBadRequest, gin.H{
