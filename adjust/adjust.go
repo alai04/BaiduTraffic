@@ -1,19 +1,33 @@
 package main
 
 import (
+	"fmt"
 	"image"
 	"image/color"
 	"image/draw"
 	"image/png"
 	"log"
 	"os"
+	"time"
 
 	"github.com/nfnt/resize"
 )
 
-var offset = image.Pt(195, 214)
+var (
+	timeConsuming time.Duration
+	offset        = image.Pt(195, 214)
+)
 
-func adjust(src, dst string) (err error) {
+func timeCost() func() {
+	start := time.Now()
+	return func() {
+		timeConsuming = time.Since(start)
+	}
+}
+
+func adjust(src, dst string) (stage string, err error) {
+	defer timeCost()()
+	stage = "OPEN"
 	bdFile, err := os.Open(src)
 	if err != nil {
 		log.Printf("Open %s error: %v", src, err)
@@ -21,6 +35,7 @@ func adjust(src, dst string) (err error) {
 	}
 	defer bdFile.Close()
 
+	stage = "DECODE"
 	bdImage, err := png.Decode(bdFile)
 	if err != nil {
 		log.Printf("Decode %s error: %v", src, err)
@@ -29,32 +44,42 @@ func adjust(src, dst string) (err error) {
 	log.Printf("bdImage type: %T", bdImage)
 	hideRects(bdImage.(*image.NRGBA))
 
-	segImages := splitVert(bdImage, adParam.vertical)
+	stage = "ADJUST"
+	segImages, err := splitVert(bdImage, adParam.vertical)
+	if err != nil {
+		log.Printf("Adjust %s error: %v", src, err)
+		return
+	}
 	tmpImage := spliceVert(segImages)
 
 	resImage := tmpImage.(*image.NRGBA)
 
+	stage = "CREATE"
 	resFile, err := os.Create(dst)
 	if err != nil {
 		log.Printf("Create %s error: %v", dst, err)
 		return
 	}
 	defer resFile.Close()
-	return png.Encode(resFile, resImage)
+
+	stage = "WRITE"
+	err = png.Encode(resFile, resImage)
+	return
 }
 
-func splitVert(img image.Image, adSegs []adjustSeg) []image.Image {
+func splitVert(img image.Image, adSegs []adjustSeg) (segImages []image.Image, err error) {
 	tmpImage, ok := img.(*image.NRGBA)
 	if !ok {
-		log.Fatalln("input image not image.NRGBA")
+		err = fmt.Errorf("input image not image.NRGBA")
+		return
 	}
 	w, h := tmpImage.Bounds().Dx(), tmpImage.Bounds().Dy()
-	var segImages []image.Image
 	cur := 0
 	for _, adSeg := range adSegs {
 		b := int(adSeg.b * float64(h))
 		if cur > b {
-			log.Fatalf("error parameter: %v", adSeg)
+			err = fmt.Errorf("error parameter: %v", adSeg)
+			return
 		} else if cur < b {
 			segImages = append(segImages, tmpImage.SubImage(image.Rect(0, cur, w, b)))
 		}
@@ -67,7 +92,7 @@ func splitVert(img image.Image, adSegs []adjustSeg) []image.Image {
 	if cur < h {
 		segImages = append(segImages, tmpImage.SubImage(image.Rect(0, cur, w, h)))
 	}
-	return segImages
+	return
 }
 
 func spliceVert(images []image.Image) image.Image {

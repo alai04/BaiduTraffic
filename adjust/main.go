@@ -7,6 +7,8 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 type adjustSeg struct {
@@ -35,6 +37,7 @@ type config struct {
 	dstFile string
 	srcDir  string
 	dstDir  string
+	port    string
 }
 
 func main() {
@@ -42,6 +45,8 @@ func main() {
 	if cfg.test {
 		test(cfg)
 	} else {
+		go metricsServe(cfg.port)
+
 		fmt.Println("Run as deamon, Crtl-C to exit ...")
 		loop(cfg)
 	}
@@ -56,8 +61,9 @@ func parse() config {
 	flag.BoolVar(&cfg.test, "t", false, "test mode")
 	flag.StringVar(&cfg.srcFile, "i", "", "source png")
 	flag.StringVar(&cfg.dstFile, "o", "", "dest png")
-	flag.StringVar(&cfg.srcDir, "sd", "", "source dir")
-	flag.StringVar(&cfg.dstDir, "dd", "", "dest dir")
+	flag.StringVar(&cfg.srcDir, "sd", "srcmap", "source dir")
+	flag.StringVar(&cfg.dstDir, "dd", "dstmap", "dest dir")
+	flag.StringVar(&cfg.port, "p", "8080", "port for metrics")
 	flag.Parse()
 	return cfg
 }
@@ -66,13 +72,18 @@ func loop(cfg config) {
 	delay := 1
 	for {
 		fn := waitForFile(cfg.srcDir)
+		level := fn[1 : len(fn)-20]
 		srcFile := filepath.Join(cfg.srcDir, fn)
 		log.Printf("adjust %s file ...", srcFile)
-		err := adjust(srcFile, filepath.Join(cfg.dstDir, fn))
+		stage, err := adjust(srcFile, filepath.Join(cfg.dstDir, fn))
 		if err == nil {
 			err = os.Remove(srcFile)
 			delay = 1
+			adjustMapsTotal.With(prometheus.Labels{"level": level}).Inc()
+			adjustConsumingTotalSeconds.With(prometheus.Labels{"level": level}).Observe(
+				float64(timeConsuming) / float64(time.Second))
 		} else {
+			adjustMapsFailure.With(prometheus.Labels{"level": level, "stage": stage}).Inc()
 			log.Printf("adjust %s error: %v, retry after %d seconds...", srcFile, err, delay)
 			time.Sleep(time.Duration(delay) * time.Second)
 			if delay < 30 {
@@ -84,7 +95,7 @@ func loop(cfg config) {
 
 func waitForFile(dir string) string {
 	for {
-		files, err := filepath.Glob(filepath.Join(dir, "*.png"))
+		files, err := filepath.Glob(filepath.Join(dir, "L*.png"))
 		if err != nil {
 			log.Printf("search png file error: %v", err)
 			return ""
