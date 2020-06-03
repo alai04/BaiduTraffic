@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-contrib/cors"
@@ -17,7 +18,8 @@ const (
 )
 
 var (
-	fileDir string
+	fileDir   string
+	urlTempls = []string{"/traffic_url", "/traffic_map"}
 )
 
 func main() {
@@ -25,6 +27,15 @@ func main() {
 	r.Use(cors.Default())
 
 	p := ginprometheus.NewPrometheus("filesrv")
+	p.ReqCntURLLabelMappingFn = func(c *gin.Context) string {
+		url := c.Request.URL.Path
+		for _, urlTempl := range urlTempls {
+			if strings.HasPrefix(url, urlTempl) {
+				return urlTempl
+			}
+		}
+		return url
+	}
 	p.Use(r)
 
 	r.GET("/ping", func(c *gin.Context) {
@@ -32,8 +43,8 @@ func main() {
 			"message": "pong",
 		})
 	})
-	r.GET("/traffic_url", handleTraffic)
-	r.Static("/traffic_map", fileDir)
+	r.GET(urlTempls[0], handleTraffic)
+	r.Static(urlTempls[1], fileDir)
 
 	r.Run() // listen and serve on 0.0.0.0:8080
 }
