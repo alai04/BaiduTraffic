@@ -35,12 +35,6 @@ var (
 	}, []string{"level"})
 )
 
-func init() {
-	prometheus.MustRegister(adjustMapsTotal)
-	prometheus.MustRegister(adjustMapsFailure)
-	prometheus.MustRegister(adjustConsumingTotalSeconds)
-}
-
 func metricsServe(port string) {
 	// Initial some counter
 	adjustMapsFailure.With(prometheus.Labels{"level": "9", "stage": "OPEN"}).Add(0)

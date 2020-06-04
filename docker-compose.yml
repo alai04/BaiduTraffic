@@ -4,7 +4,7 @@ services:
     build: crawling
     image: "alai04/crawling"
     volumes:
-      - ./map:/opt/crawling/map
+      - ./srcmap:/opt/crawling/map
     command: ["./crawling", "-d", "/opt/crawling/map", "-w", "10", "-l", "11"] 
     restart: always
 
@@ -21,8 +21,10 @@ services:
   adjust:
     build: adjust
     image: "alai04/adjust"
+    ports: 
+      - "9101:8080"
     volumes:
-      - ./map:/opt/adjust/srcmap
+      - ./srcmap:/opt/adjust/srcmap
       - ./dstmap:/opt/adjust/dstmap
     command: ["./adjust", "-sd", "/opt/adjust/srcmap", "-dd", "/opt/adjust/dstmap"] 
     restart: always

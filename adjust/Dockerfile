@@ -11,4 +11,5 @@ ADD *.go /opt/adjust/
 ADD go.* /opt/adjust/
 RUN go build
 
+EXPOSE 8080
 CMD ["./adjust", "-h"]
