@@ -5,46 +5,37 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 
+	"github.com/Depado/ginprom"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	ginprometheus "github.com/zsais/go-gin-prometheus"
 )
 
 const (
-	dateTimeFormat = "20060102150405"
+	dateTimeFormat     = "20060102150405"
+	prometheusSubsystm = "filesrv"
 )
 
 var (
-	fileDir   string
-	urlTempls = []string{"/traffic_url", "/traffic_map"}
+	fileDir  string
+	urlPaths = []string{"/traffic_url", "/traffic_map"}
 )
 
 func main() {
 	r := gin.Default()
 	r.Use(cors.Default())
 
-	p := ginprometheus.NewPrometheus("filesrv")
-	p.ReqCntURLLabelMappingFn = func(c *gin.Context) string {
-		url := c.Request.URL.Path
-		for _, urlTempl := range urlTempls {
-			if strings.HasPrefix(url, urlTempl) {
-				return urlTempl
-			}
-		}
-		return url
-	}
-	p.Use(r)
+	p := ginprom.New(
+		ginprom.Engine(r),
+		ginprom.Namespace(""),
+		ginprom.Subsystem(prometheusSubsystm),
+		ginprom.Path("/metrics"),
+	)
+	r.Use(p.Instrument())
 
-	r.GET("/ping", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"message": "pong",
-		})
-	})
-	r.GET(urlTempls[0], handleTraffic)
-	r.Static(urlTempls[1], fileDir)
+	r.GET(urlPaths[0], handleTraffic)
+	r.Static(urlPaths[1], fileDir)
 
 	r.Run() // listen and serve on 0.0.0.0:8080
 }
