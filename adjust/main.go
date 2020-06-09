@@ -74,14 +74,17 @@ func loop(cfg config) {
 		fn := waitForFile(cfg.srcDir)
 		level := fn[1 : len(fn)-20]
 		srcFile := filepath.Join(cfg.srcDir, fn)
+		dstFile := filepath.Join(cfg.dstDir, fn)
 		log.Printf("adjust %s file ...", srcFile)
-		stage, err := adjust(srcFile, filepath.Join(cfg.dstDir, fn))
+		stage, err := adjust(srcFile, dstFile)
 		if err == nil {
 			err = os.Remove(srcFile)
 			delay = 1
 			adjustMapsTotal.With(prometheus.Labels{"level": level}).Inc()
 			adjustConsumingTotalSeconds.With(prometheus.Labels{"level": level}).Observe(
 				float64(timeConsuming) / float64(time.Second))
+			fInfo, _ := os.Stat(dstFile)
+			adjustTotalBytes.Observe(float64(fInfo.Size()))
 		} else {
 			adjustMapsFailure.With(prometheus.Labels{"level": level, "stage": stage}).Inc()
 			log.Printf("adjust %s error: %v, retry after %d seconds...", srcFile, err, delay)

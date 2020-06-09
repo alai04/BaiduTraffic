@@ -33,6 +33,11 @@ var (
 		Name:      "consuming_total_seconds",
 		Help:      "调整图片总耗时",
 	}, []string{"level"})
+	adjustTotalBytes = promauto.NewSummary(prometheus.SummaryOpts{
+		Subsystem: subsystem,
+		Name:      "total_bytes",
+		Help:      "调整图片字节数",
+	})
 )
 
 func metricsServe(port string) {
