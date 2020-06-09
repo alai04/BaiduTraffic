@@ -12,6 +12,7 @@ import (
 type stFile struct {
 	Time     string `json:"time"`
 	Filename string `json:"filename"`
+	Filesize int64  `json:"filesize"`
 }
 
 const (
@@ -26,16 +27,6 @@ type fileFinder struct {
 }
 
 func (ff fileFinder) findFile() (res stFile, err error) {
-	fn, tm := ff.findNearestFile()
-	if fn == "" {
-		return res, fmt.Errorf("cannot find image")
-	}
-	res.Time = tm.Format(dateTimeFormat)
-	res.Filename = fn
-	return
-}
-
-func (ff fileFinder) findNearestFile() (fn string, ftm time.Time) {
 	diffMin := float64(time.Duration(1<<63 - 1))
 	filePrefix := fmt.Sprintf("L%d_", ff.level)
 	filepath.Walk(fileDir, func(path string, info os.FileInfo, err error) error {
@@ -52,16 +43,18 @@ func (ff fileFinder) findNearestFile() (fn string, ftm time.Time) {
 			diff := math.Abs(float64(ff.tm.Sub(tmCur)))
 			if diff < diffMin {
 				diffMin = diff
-				fn = path[len(fileDir):]
-				ftm = tmCur
+				res.Filename = path[len(fileDir):]
+				res.Time = tmCur.Format(dateTimeFormat)
+				res.Filesize = info.Size()
 			}
 		}
 		return nil
 	})
 	if diffMin > float64(time.Duration(ff.deviation)*time.Second) {
-		return "", ftm
+		res = stFile{}
+		err = fmt.Errorf("cannot find image")
 	}
-	return fn, ftm
+	return
 }
 
 func fileTime(fn string) (tm time.Time, err error) {
