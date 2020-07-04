@@ -46,6 +46,7 @@ func main() {
 		test(cfg)
 	} else {
 		go metricsServe(cfg.port)
+		go statFileNum(cfg.dstDir)
 
 		fmt.Println("Run as deamon, Crtl-C to exit ...")
 		loop(cfg)
@@ -123,5 +124,28 @@ func waitForFile(dir string) string {
 			}
 		}
 		time.Sleep(1 * time.Second)
+	}
+}
+
+func statFileNum(dir string) {
+	const fileNameFormat = "L*_*.png"
+	dir1 := fmt.Sprintf("%s/%s", dir, fileNameFormat)
+	dir2 := fmt.Sprintf("%s/*/%s", dir, fileNameFormat)
+
+	for {
+		matches1, err1 := filepath.Glob(dir1)
+		matches2, err2 := filepath.Glob(dir2)
+		total := len(matches1) + len(matches2)
+		if err1 == nil || err2 == nil {
+			totalFilesInDest.Set(float64(total))
+			log.Printf("Map files in %s: %d", dir, total)
+		} else {
+			err := err1
+			if err == nil {
+				err = err2
+			}
+			log.Printf("Glob(%q) return error: %v", dir, err)
+		}
+		time.Sleep(60 * time.Second)
 	}
 }

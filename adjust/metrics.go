@@ -38,6 +38,11 @@ var (
 		Name:      "total_bytes",
 		Help:      "调整图片字节数",
 	})
+	totalFilesInDest = promauto.NewGauge(prometheus.GaugeOpts{
+		Subsystem: subsystem,
+		Name:      "total_files_in_dest",
+		Help:      "目标目录文件总数",
+	})
 )
 
 func metricsServe(port string) {
