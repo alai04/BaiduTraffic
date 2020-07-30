@@ -14,10 +14,12 @@ const (
 )
 
 type config struct {
-	test    bool
-	level   int
-	workers int
-	fileDir string
+	test     bool
+	level    int
+	workers  int
+	interval int
+	fileDir  string
+	rect     rectangle
 }
 
 func main() {
@@ -32,16 +34,18 @@ func main() {
 
 func parse() config {
 	var cfg config
-	flag.BoolVar(&cfg.test, "t", false, "test mode")
-	flag.IntVar(&cfg.level, "l", 9, "max level of map, or level of map for test")
-	flag.IntVar(&cfg.workers, "w", 1, "num of workers")
-	flag.StringVar(&cfg.fileDir, "d", "./", "directory of output")
+	flag.BoolVar(&cfg.test, "t", false, "测试模式，仅执行一次")
+	flag.IntVar(&cfg.level, "l", 9, "抓取瓦片图的级别")
+	flag.IntVar(&cfg.workers, "w", 1, "并发线程数")
+	flag.IntVar(&cfg.interval, "i", 1, "间隔分钟数")
+	flag.StringVar(&cfg.fileDir, "d", "./", "图片输出目录")
+	flag.Var(&cfg.rect, "r", `抓取范围的坐标，格式：左下右上，如"121.4595,31.1939,121.5150,31.2503"`)
 	flag.Parse()
 	return cfg
 }
 
 func test(cfg config) {
-	m := NewTrafficMap(cfg.level, cfg.workers, cfg.fileDir)
+	m := NewTrafficMap(cfg)
 	fn, err := m.GetMap()
 	if err == nil {
 		log.Printf("Traffic map save to: %v", fn)
@@ -55,22 +59,16 @@ func loop(cfg config) {
 	if workers < 1 || workers > 20 {
 		workers = defaultWorkers
 	}
-	maxLevel := cfg.level
-	if maxLevel < 9 || workers > 15 {
-		maxLevel = defaultMaxLevel
-	}
 
 	for {
 		tBegin := time.Now()
-		tNext := tBegin.Add(time.Minute)
-		for l := 9; l <= maxLevel; l++ {
-			m := NewTrafficMap(l, workers, cfg.fileDir)
-			fn, err := m.GetMap()
-			if err == nil {
-				log.Printf("Traffic map save to: %v", fn)
-			} else {
-				log.Printf("GetTrafficMap() error: %v", err)
-			}
+		tNext := tBegin.Add(time.Duration(cfg.interval) * time.Minute)
+		m := NewTrafficMap(cfg)
+		fn, err := m.GetMap()
+		if err == nil {
+			log.Printf("Traffic map save to: %v", fn)
+		} else {
+			log.Printf("GetTrafficMap() error: %v", err)
 		}
 		log.Printf("Loop consuming: %v", time.Since(tBegin))
 		if time.Now().Before(tNext) {

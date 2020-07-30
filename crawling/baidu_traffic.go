@@ -6,7 +6,6 @@ import (
 	"image/draw"
 	"image/png"
 	"log"
-	"math"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -15,23 +14,17 @@ import (
 )
 
 const (
-	urlPrefix    = "http://its.map.baidu.com:8002/traffic/TrafficTileService"
-	xBeginLevel9 = 97
-	xEndLevel9   = 102
-	yBeginLevel9 = 25
-	yEndLevel9   = 32
-	xSmallSize   = 256
-	ySmallSize   = 256
+	urlPrefix  = "http://its.map.baidu.com:8002/traffic/TrafficTileService"
+	xSmallSize = 256
+	ySmallSize = 256
 )
 
 // TrafficMap specify level of map, num of threads to get data from baidu.com
 type TrafficMap struct {
-	level   int
-	workers int
-	fileDir string
-	wg      *sync.WaitGroup
-	result  draw.Image
-	nErr    int
+	config
+	wg     *sync.WaitGroup
+	result draw.Image
+	nErr   int
 }
 
 type mapRequest struct {
@@ -48,20 +41,25 @@ type mapResponse struct {
 }
 
 // NewTrafficMap return a struct TrafficMap with level & workers
-func NewTrafficMap(level int, workers int, fileDir string) *TrafficMap {
+func NewTrafficMap(cfg config) *TrafficMap {
 	return &TrafficMap{
-		level:   level,
-		workers: workers,
-		fileDir: fileDir,
-		wg:      new(sync.WaitGroup),
+		config: cfg,
+		wg:     new(sync.WaitGroup),
 	}
 }
 
 // GetMap return the filename of whole traffic map
 func (m TrafficMap) GetMap() (mapFilename string, err error) {
-	scale := int(math.Pow(2, float64(m.level-9)))
-	xBegin, xEnd := xBeginLevel9*scale, xEndLevel9*scale
-	yBegin, yEnd := yBeginLevel9*scale, yEndLevel9*scale
+	xBegin, yBegin := LatLng2TileXY(m.rect.b, m.rect.l, m.level)
+	xEnd, yEnd := LatLng2TileXY(m.rect.t, m.rect.r, m.level)
+	if xBegin > xEnd {
+		xBegin, xEnd = xEnd, xBegin
+	}
+	if yBegin > yEnd {
+		yBegin, yEnd = yEnd, yBegin
+	}
+	xEnd++
+	yEnd++
 
 	tm := time.Now()
 	tmStr := tm.Format("20060102_150405")
