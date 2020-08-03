@@ -15,6 +15,7 @@ const (
 
 type config struct {
 	test     bool
+	amap     bool
 	level    int
 	workers  int
 	interval int
@@ -35,6 +36,7 @@ func main() {
 func parse() config {
 	var cfg config
 	flag.BoolVar(&cfg.test, "t", false, "测试模式，仅执行一次")
+	flag.BoolVar(&cfg.amap, "a", false, "使用高德地图，缺省使用百度地图")
 	flag.IntVar(&cfg.level, "l", 9, "抓取瓦片图的级别")
 	flag.IntVar(&cfg.workers, "w", 1, "并发线程数")
 	flag.IntVar(&cfg.interval, "i", 1, "间隔分钟数")

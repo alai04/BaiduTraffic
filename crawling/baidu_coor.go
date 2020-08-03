@@ -1,6 +1,21 @@
 package main
 
-import "math"
+import (
+	"fmt"
+	"image"
+	"image/png"
+	"log"
+	"math"
+	"net/http"
+)
+
+// BaiduCoor 百度坐标系
+type BaiduCoor struct{}
+
+// NewBaiduCoor 返回百度坐标系
+func NewBaiduCoor() BaiduCoor {
+	return BaiduCoor{}
+}
 
 var (
 	array1 = []float64{75, 60, 45, 30, 15, 0}
@@ -46,7 +61,7 @@ var (
 )
 
 // LatLng2Mercator 百度坐标转墨卡托(纬度,经度)-->(横向x,纵向y)
-func LatLng2Mercator(pLat, pLng float64) (x int, y int) {
+func (bdc BaiduCoor) LatLng2Mercator(pLat, pLng float64) (x int, y int) {
 	var arr []float64
 	nLat := pLat
 	if pLat > 74 {
@@ -69,13 +84,13 @@ func LatLng2Mercator(pLat, pLng float64) (x int, y int) {
 			}
 		}
 	}
-	fx, fy := Convertor(pLng, nLat, arr)
+	fx, fy := bdc.Convertor(pLng, nLat, arr)
 	x, y = int(math.Floor(fx)), int(math.Floor(fy))
 	return
 }
 
 // Mercator2LatLng 墨卡托坐标转百度(横向像素x,纵向像素y)
-func Mercator2LatLng(pX, pY int) (lat, lon float64) {
+func (bdc BaiduCoor) Mercator2LatLng(pX, pY int) (lat, lon float64) {
 	var arr []float64
 	for i := range array3 {
 		if math.Abs(float64(pY)) >= array3[i] {
@@ -83,11 +98,11 @@ func Mercator2LatLng(pX, pY int) (lat, lon float64) {
 			break
 		}
 	}
-	return Convertor(math.Abs(float64(pX)), math.Abs(float64(pY)), arr)
+	return bdc.Convertor(math.Abs(float64(pX)), math.Abs(float64(pY)), arr)
 }
 
 // Convertor 墨卡托坐标转换函数
-func Convertor(x, y float64, param []float64) (float64, float64) {
+func (bdc BaiduCoor) Convertor(x, y float64, param []float64) (float64, float64) {
 	T := param[0] + param[1]*math.Abs(x)
 	cC := math.Abs(y) / param[9]
 	cF := param[2] + param[3]*cC + param[4]*cC*cC + param[5]*cC*cC*cC +
@@ -102,7 +117,7 @@ func Convertor(x, y float64, param []float64) (float64, float64) {
 }
 
 // Mercator2TileXY 获取瓦片编号
-func Mercator2TileXY(pMercX, pMercY, zoom int) (int, int) {
+func (bdc BaiduCoor) Mercator2TileXY(pMercX, pMercY, zoom int) (int, int) {
 	resolution := math.Pow(2, float64(18-zoom))
 	x := float64(pMercX) / resolution / 256
 	y := float64(pMercY) / resolution / 256
@@ -110,7 +125,33 @@ func Mercator2TileXY(pMercX, pMercY, zoom int) (int, int) {
 }
 
 // LatLng2TileXY 百度坐标转瓦片编号
-func LatLng2TileXY(pLat, pLng float64, zoom int) (x int, y int) {
-	mercX, mercY := LatLng2Mercator(pLat, pLng)
-	return Mercator2TileXY(mercX, mercY, zoom)
+func (bdc BaiduCoor) LatLng2TileXY(pLat, pLng float64, zoom int) (x int, y int) {
+	x, y, _, _ = bdc.LatLng2TileXYHR(pLat, pLng, zoom)
+	return
+}
+
+// LatLng2TileXYHR 百度坐标转瓦片编号及像素点位置
+func (bdc BaiduCoor) LatLng2TileXYHR(pLat, pLng float64, zoom int) (tx, ty, x, y int) {
+	mercX, mercY := bdc.LatLng2Mercator(pLat, pLng)
+	tx, ty = bdc.Mercator2TileXY(mercX, mercY, zoom)
+	return
+}
+
+// TileXYHR2LatLng 瓦片编号及像素点位置转百度坐标
+func (bdc BaiduCoor) TileXYHR2LatLng(tx, ty, x, y, zoom int) (lat, lng float64) {
+	return
+}
+
+// GetTile 获取指定瓦片编号的路况图片
+func (bdc BaiduCoor) GetTile(req mapRequest) (img image.Image, err error) {
+	const urlPrefix string = "http://its.map.baidu.com:8002/traffic/TrafficTileService"
+	url := fmt.Sprintf("%v?time=%d&level=%d&x=%d&y=%d", urlPrefix, req.ts, req.z, req.x, req.y)
+	log.Printf("%d,%d %v", req.xPaste, req.yPaste, url)
+	var resp *http.Response
+	resp, err = http.Get(url)
+	if err == nil {
+		img, err = png.Decode(resp.Body)
+		resp.Body.Close()
+	}
+	return
 }
