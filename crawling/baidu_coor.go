@@ -17,6 +17,11 @@ func NewBaiduCoor() BaiduCoor {
 	return BaiduCoor{}
 }
 
+// YDirectionN 返回Y轴方向是否向N
+func (bdc BaiduCoor) YDirectionN() bool {
+	return true
+}
+
 var (
 	array1 = []float64{75, 60, 45, 30, 15, 0}
 	array3 = []float64{12890594.86, 8362377.87, 5591021, 3481989.83, 1678043.12, 0}

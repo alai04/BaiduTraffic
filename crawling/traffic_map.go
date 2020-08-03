@@ -85,15 +85,19 @@ func (m TrafficMap) GetMap() (mapFilename string, err error) {
 	for x := xBegin; x < xEnd; x++ {
 		for y := yBegin; y < yEnd; y++ {
 			n++
-			chRequest <- mapRequest{
+			req := mapRequest{
 				x:      x,
 				y:      y,
 				z:      m.level,
 				xPaste: x - xBegin,
-				yPaste: yEnd - 1 - y,
+				yPaste: y - yBegin,
 				coor:   coor,
 				ts:     ts,
 			}
+			if coor.YDirectionN() {
+				req.yPaste = yEnd - 1 - y
+			}
+			chRequest <- req
 		}
 	}
 	close(chRequest)
