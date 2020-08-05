@@ -22,6 +22,11 @@ func (bdc BaiduCoor) YDirectionN() bool {
 	return true
 }
 
+// ScalingFactor 百度的瓦片放大系数为1
+func (bdc BaiduCoor) ScalingFactor() int {
+	return 1
+}
+
 var (
 	array1 = []float64{75, 60, 45, 30, 15, 0}
 	array3 = []float64{12890594.86, 8362377.87, 5591021, 3481989.83, 1678043.12, 0}

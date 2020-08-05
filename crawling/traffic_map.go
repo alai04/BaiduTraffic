@@ -73,6 +73,13 @@ func (m TrafficMap) GetMap() (mapFilename string, err error) {
 	ts := tm.UnixNano() / 1000000
 
 	n := 0
+	scale := coor.ScalingFactor()
+	if xEnd%scale != 0 {
+		xEnd += scale - xEnd%scale
+	}
+	if yEnd%scale != 0 {
+		yEnd += scale - yEnd%scale
+	}
 	m.result = image.NewRGBA(image.Rect(0, 0, xSmallSize*(xEnd-xBegin), ySmallSize*(yEnd-yBegin)))
 
 	chRequest := make(chan mapRequest, m.workers)
@@ -82,8 +89,8 @@ func (m TrafficMap) GetMap() (mapFilename string, err error) {
 	done := make(chan struct{})
 	go m.pasteImages(done, chResponse)
 
-	for x := xBegin; x < xEnd; x++ {
-		for y := yBegin; y < yEnd; y++ {
+	for x := xBegin; x < xEnd; x += scale {
+		for y := yBegin; y < yEnd; y += scale {
 			n++
 			req := mapRequest{
 				x:      x,
