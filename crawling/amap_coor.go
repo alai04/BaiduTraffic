@@ -57,8 +57,8 @@ func (amc AmapCoor) TileXYHR2LatLng(tx, ty, x, y, zoom int) (lat, lng float64) {
 // GetTile 获取指定瓦片编号的路况图片
 func (amc AmapCoor) GetTile(req mapRequest) (img image.Image, err error) {
 	lat, lng := amc.TileXYHR2LatLng(req.x, req.y, 0, 0, req.z)
-	const urlPrefix = "https://restapi.amap.com/v3/staticmap?&size=1024*1024&key=5c3ff1a9ba96bd86123c21fd377a2e8c&traffic=1"
-	url := fmt.Sprintf("%v&zoom=%d&location=%f,%f", urlPrefix, req.z-1, lng, lat)
+	const urlPrefix = "https://restapi.amap.com/v3/staticmap?&size=1024*1024&traffic=1"
+	url := fmt.Sprintf("%v&key=%s&zoom=%d&location=%f,%f", urlPrefix, getRandomKey(), req.z-1, lng, lat)
 	log.Printf("%d,%d %v", req.xPaste, req.yPaste, url)
 	var resp *http.Response
 	resp, err = http.Get(url)
