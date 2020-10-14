@@ -32,10 +32,8 @@ func serve() {
 	// example: http://localhost:8080/amap?lng=121.484&lat=31.216&z=16
 	mux := http.NewServeMux()
 	mux.Handle("/amap", amap{})
-	if flagServe {
-		log.Printf("Listen on port %d", flagPort)
-		log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", flagPort), mux))
-	}
+	log.Printf("Listen on port %d", flagPort)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", flagPort), mux))
 }
 
 type mapParams struct {
