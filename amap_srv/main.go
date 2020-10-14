@@ -2,7 +2,12 @@ package main
 
 import (
 	"flag"
-	"net/http/httptest"
+	"fmt"
+	"log"
+	"net/http"
+	"time"
+
+	"github.com/alai04/BaiduTraffic/amap_srv/amap"
 )
 
 var (
@@ -18,11 +23,30 @@ func init() {
 
 func main() {
 	if flagServe {
-		serve()
+		// example: http://localhost:8080/amap?lng=121.484&lat=31.216&z=16
+		mux := http.NewServeMux()
+		mux.Handle("/amap", amap.Amap{})
+		log.Printf("Listen on port %d", flagPort)
+		log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", flagPort), mux))
 		return
 	}
 
-	ts := httptest.NewServer(amap{})
-	defer ts.Close()
-	shot(ts.URL)
+	url, closeFunc := amap.PrepareForShot()
+	defer closeFunc()
+
+	done := make(chan struct{})
+	go promptWaiting(done)
+	amap.Shot(url)
+	close(done)
+}
+
+func promptWaiting(done <-chan struct{}) {
+	for {
+		select {
+		case <-done:
+			return
+		case <-time.After(time.Second):
+			fmt.Print(".")
+		}
+	}
 }
