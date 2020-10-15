@@ -11,13 +11,23 @@ import (
 )
 
 var (
-	flagServe bool
-	flagPort  int
+	flagServe  bool
+	flagPort   int
+	flagCenter string
+	flagWidth  int64
+	flagHeight int64
+	flagZoom   int
+	flagBase   bool
 )
 
 func init() {
-	flag.BoolVar(&flagServe, "s", false, "Run as web server")
-	flag.IntVar(&flagPort, "p", 8080, "Port for listening on")
+	flag.BoolVar(&flagServe, "s", false, "以Web服务方式运行")
+	flag.IntVar(&flagPort, "p", 8080, "监听端口")
+	flag.BoolVar(&flagBase, "b", false, "是否带底图")
+	flag.Int64Var(&flagWidth, "w", 256, "地图图片宽度")
+	flag.Int64Var(&flagHeight, "h", 256, "地图图片高度")
+	flag.IntVar(&flagZoom, "z", 10, "地图缩放级别(3-20)")
+	flag.StringVar(&flagCenter, "c", "121.4833305,31.216065", "地图中心点坐标")
 	flag.Parse()
 }
 
@@ -34,9 +44,22 @@ func main() {
 	url, closeFunc := amap.PrepareForShot()
 	defer closeFunc()
 
+	var lng, lat float64
+	n, err := fmt.Sscanf(flagCenter, "%f,%f", &lng, &lat)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if n != 2 {
+		log.Fatalf("中心点坐标不正确: %s", flagCenter)
+	}
+	url = fmt.Sprintf("%s?lng=%f&lat=%f&z=%d", url, lng, lat, flagZoom)
+	if flagBase {
+		url += "&b=1"
+	}
+
 	done := make(chan struct{})
 	go promptWaiting(done)
-	amap.Shot(url)
+	amap.Shot(url, flagWidth, flagHeight)
 	close(done)
 }
 

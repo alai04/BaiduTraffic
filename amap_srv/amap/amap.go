@@ -35,6 +35,7 @@ type mapParams struct {
 	Base bool    `schema:"b"`
 }
 
+// ServeHTTP implement http.Handler
 func (a Amap) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Printf("got: %v", *r)
 	mp := mapParams{
@@ -68,16 +69,15 @@ func PrepareForShot() (url string, close func()) {
 }
 
 // Shot captures the screenshot from amap
-func Shot(url string) {
+func Shot(url string, w int64, h int64) {
 	var buf []byte
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	ctx, cancel = cdp.NewContext(ctx, cdp.WithLogf(log.Printf))
 	defer cancel()
 
-	url += `?lng=121.484&lat=31.216&z=16&b=1`
 	err := cdp.Run(ctx, cdp.Tasks{
-		cdp.EmulateViewport(2600, 3200),
+		cdp.EmulateViewport(w, h),
 		cdp.Navigate(url),
 		cdp.WaitNotVisible(`#tip`),
 		cdp.CaptureScreenshot(&buf),
