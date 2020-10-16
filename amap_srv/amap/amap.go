@@ -83,7 +83,7 @@ const tplAText = `<!DOCTYPE html>
   </head>
   <body>
     <div id="container"></div>
-    <div id="tcBtn" class="info">地图正在加载</div>
+    <div id="tips" class="info">地图正在加载</div>
     <script src="https://webapi.amap.com/maps?v=1.4.15&key=1eae5203e9e7140c6ece93c745e422b5"></script>
     <script>
       var stdLayer = new AMap.TileLayer({
@@ -105,7 +105,7 @@ const tplAText = `<!DOCTYPE html>
 
       map.on('complete', function() {
 				setTimeout(function() {
-					document.getElementById('tcBtn').style.display = "none";
+					document.getElementById('tips').style.display = "none";
 				}, 1000);
       });
     </script>

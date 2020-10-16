@@ -41,7 +41,7 @@ func Shot(url string, w int64, h int64, fn string) error {
 	return cdp.Run(ctx, cdp.Tasks{
 		cdp.EmulateViewport(w, h),
 		cdp.Navigate(url),
-		cdp.WaitNotVisible(`#tcBtn`),
+		cdp.WaitNotVisible(`#tips`),
 		cdp.CaptureScreenshot(&buf),
 		screenshotSave(fn, &buf),
 	})

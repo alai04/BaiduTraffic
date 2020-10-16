@@ -70,6 +70,19 @@ const tplBText = `<!DOCTYPE html>
         height: 100%;
         width: 100%;
       }
+      #tips {
+        padding: 0.75rem 1.25rem;
+        margin-bottom: 1rem;
+        border-radius: 0.25rem;
+        position: fixed;
+        top: 1rem;
+        background-color: white;
+        width: auto;
+        min-width: 22rem;
+        border-width: 0;
+        right: 1rem;
+        box-shadow: 0 2px 6px 0 rgba(114, 124, 245, 0.5);
+      }
     </style>
     <!--引用百度地图API-->
     <script
@@ -90,35 +103,18 @@ const tplBText = `<!DOCTYPE html>
   <body>
     <!--百度地图容器-->
     <div id="map"></div>
+    <div id="tips" class="info">地图正在加载</div>
   </body>
   <script type="text/javascript">
-    //创建和初始化地图函数：
-    function initMap() {
-      createMap(); //创建地图
-      setMapEvent(); //设置地图事件
-      addMapControl(); //向地图添加控件
-      addMapOverlay(); //向地图添加覆盖物
-    }
-    function createMap() {
-      map = new BMap.Map("map");
-      map.centerAndZoom(new BMap.Point({{ .Lng }}, {{ .Lat }}), {{ .Zoom }});
-    }
-    function setMapEvent() {}
-    function addMapOverlay() {}
-    //向地图添加控件
-    function addMapControl() {
-      var ctrl = new BMapLib.TrafficControl({
-        showPanel: true, //是否显示路况提示面板
-      });
-      map.addControl(ctrl);
-    }
-    var map;
-    initMap();
-    document.getElementById("tcBtn").click();
-    document.getElementById("tcWrap").style.display = "none";
-    setTimeout(function () {
-      document.getElementById("tcBtn").style.display = "none";
-    }, 2000);
+    var map = new BMap.Map("map");
+    var traffic = new BMap.TrafficLayer();
+    map.addTileLayer(traffic);
+    map.addEventListener("tilesloaded", function () {
+      setTimeout(function () {
+        document.getElementById("tips").style.display = "none";
+      }, 500);
+    });
+    map.centerAndZoom(new BMap.Point(121.484, 31.216), 16);
   </script>
 </html>
 `
