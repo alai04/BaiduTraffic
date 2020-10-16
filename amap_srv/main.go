@@ -11,20 +11,22 @@ import (
 )
 
 var (
-	flagServe  bool
-	flagPort   int
-	flagCenter string
-	flagWidth  int64
-	flagHeight int64
-	flagZoom   int
-	flagBase   bool
-	flagMapDir string
+	flagServe       bool
+	flagPort        int
+	flagCenter      string
+	flagWidth       int64
+	flagHeight      int64
+	flagZoom        int
+	flagBase        bool
+	flagMapDir      string
+	flagMapProvider string
 )
 
 func init() {
 	flag.BoolVar(&flagServe, "s", false, "以Web服务方式运行")
 	flag.IntVar(&flagPort, "p", 8080, "监听端口")
-	flag.BoolVar(&flagBase, "b", false, "是否带底图")
+	flag.BoolVar(&flagBase, "b", false, "是否带底图(仅对高德地图有效)")
+	flag.StringVar(&flagMapProvider, "m", "amap", "地图提供方，缺省为高德地图")
 	flag.Int64Var(&flagWidth, "w", 256, "地图图片宽度")
 	flag.Int64Var(&flagHeight, "h", 256, "地图图片高度")
 	flag.IntVar(&flagZoom, "z", 10, "地图缩放级别(3-20)")
@@ -38,12 +40,16 @@ func main() {
 		// example: http://localhost:8080/amap?lng=121.484&lat=31.216&z=16
 		mux := http.NewServeMux()
 		mux.Handle("/amap", amap.Amap{})
+		mux.Handle("/bmap", amap.Bmap{})
 		log.Printf("Listen on port %d", flagPort)
 		log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", flagPort), mux))
 		return
 	}
 
-	url, closeFunc := amap.PrepareForShot()
+	url, closeFunc := amap.PrepareForShot(flagMapProvider)
+	if url == "" || closeFunc == nil {
+		log.Fatal(fmt.Errorf("MapProvider %q not found", flagMapProvider))
+	}
 	defer closeFunc()
 
 	var lng, lat float64

@@ -1,25 +1,20 @@
 package amap
 
 import (
-	"context"
 	"html/template"
-	"io/ioutil"
 	"log"
 	"net/http"
-	"net/http/httptest"
-	"time"
 
-	cdp "github.com/chromedp/chromedp"
 	"github.com/gorilla/schema"
 )
 
 var (
-	tpl     *template.Template
+	tplA    *template.Template
 	decoder = schema.NewDecoder()
 )
 
 func init() {
-	tpl = template.Must(template.New("amap.html.template").Parse(tplText))
+	tplA = template.Must(template.New("amap.html.template").Parse(tplAText))
 }
 
 // Amap implement http.Handler, use to return amap
@@ -27,20 +22,20 @@ type Amap struct {
 }
 
 type mapParams struct {
-	// Width  int     `schema:"w"`
-	// Height int     `schema:"h"`
 	Lng  float64 `schema:"lng"`
 	Lat  float64 `schema:"lat"`
 	Zoom int     `schema:"z"`
 	Base bool    `schema:"b"`
 }
 
+func (a Amap) getName() string {
+	return "amap"
+}
+
 // ServeHTTP implement http.Handler
 func (a Amap) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Printf("got: %v", *r)
 	mp := mapParams{
-		// Width:  2800,
-		// Height: 3500,
 		Lng:  121.484,
 		Lat:  31.216,
 		Zoom: 16,
@@ -55,44 +50,13 @@ func (a Amap) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "text/html")
-	err = tpl.Execute(w, mp)
+	err = tplA.Execute(w, mp)
 	if err != nil {
 		log.Printf("Template execute error: %v", err)
 	}
 }
 
-// PrepareForShot prepares the http server to return html for amap
-// Prepare 1 time, shot anytime
-func PrepareForShot() (url string, close func()) {
-	ts := httptest.NewServer(Amap{})
-	return ts.URL, ts.Close
-}
-
-// Shot captures the screenshot from amap
-func Shot(url string, w int64, h int64, fn string) error {
-	var buf []byte
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-	ctx, cancel = cdp.NewContext(ctx, cdp.WithLogf(log.Printf))
-	defer cancel()
-
-	return cdp.Run(ctx, cdp.Tasks{
-		cdp.EmulateViewport(w, h),
-		cdp.Navigate(url),
-		cdp.WaitNotVisible(`#tip`),
-		cdp.CaptureScreenshot(&buf),
-		screenshotSave(fn, &buf),
-	})
-}
-
-func screenshotSave(fileName string, buf *[]byte) cdp.ActionFunc {
-	return func(ctx context.Context) error {
-		log.Printf("Write %v", fileName)
-		return ioutil.WriteFile(fileName, *buf, 0644)
-	}
-}
-
-const tplText = `<!DOCTYPE html>
+const tplAText = `<!DOCTYPE html>
 <html>
   <head>
     <meta charset="utf-8" />
@@ -119,7 +83,7 @@ const tplText = `<!DOCTYPE html>
   </head>
   <body>
     <div id="container"></div>
-    <div id="tip" class="info">地图正在加载</div>
+    <div id="tcBtn" class="info">地图正在加载</div>
     <script src="https://webapi.amap.com/maps?v=1.4.15&key=1eae5203e9e7140c6ece93c745e422b5"></script>
     <script>
       var stdLayer = new AMap.TileLayer({
@@ -141,7 +105,7 @@ const tplText = `<!DOCTYPE html>
 
       map.on('complete', function() {
 				setTimeout(function() {
-					document.getElementById('tip').style.display = "none";
+					document.getElementById('tcBtn').style.display = "none";
 				}, 1000);
       });
     </script>
