@@ -69,23 +69,20 @@ func PrepareForShot() (url string, close func()) {
 }
 
 // Shot captures the screenshot from amap
-func Shot(url string, w int64, h int64) {
+func Shot(url string, w int64, h int64, fn string) error {
 	var buf []byte
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	ctx, cancel = cdp.NewContext(ctx, cdp.WithLogf(log.Printf))
 	defer cancel()
 
-	err := cdp.Run(ctx, cdp.Tasks{
+	return cdp.Run(ctx, cdp.Tasks{
 		cdp.EmulateViewport(w, h),
 		cdp.Navigate(url),
 		cdp.WaitNotVisible(`#tip`),
 		cdp.CaptureScreenshot(&buf),
-		screenshotSave("foo.png", &buf),
+		screenshotSave(fn, &buf),
 	})
-	if err != nil {
-		log.Fatal(err)
-	}
 }
 
 func screenshotSave(fileName string, buf *[]byte) cdp.ActionFunc {
@@ -143,7 +140,9 @@ const tplText = `<!DOCTYPE html>
       });
 
       map.on('complete', function() {
-          document.getElementById('tip').style.display = "none";
+				setTimeout(function() {
+					document.getElementById('tip').style.display = "none";
+				}, 1000);
       });
     </script>
   </body>

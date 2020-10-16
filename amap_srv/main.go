@@ -18,6 +18,7 @@ var (
 	flagHeight int64
 	flagZoom   int
 	flagBase   bool
+	flagMapDir string
 )
 
 func init() {
@@ -28,6 +29,7 @@ func init() {
 	flag.Int64Var(&flagHeight, "h", 256, "地图图片高度")
 	flag.IntVar(&flagZoom, "z", 10, "地图缩放级别(3-20)")
 	flag.StringVar(&flagCenter, "c", "121.4833305,31.216065", "地图中心点坐标")
+	flag.StringVar(&flagMapDir, "d", "map", "地图图片输出目录")
 	flag.Parse()
 }
 
@@ -47,20 +49,27 @@ func main() {
 	var lng, lat float64
 	n, err := fmt.Sscanf(flagCenter, "%f,%f", &lng, &lat)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("中心点坐标不正确: %q, %v", flagCenter, err)
 	}
 	if n != 2 {
-		log.Fatalf("中心点坐标不正确: %s", flagCenter)
+		log.Fatalf("中心点坐标不正确: %q", flagCenter)
 	}
 	url = fmt.Sprintf("%s?lng=%f&lat=%f&z=%d", url, lng, lat, flagZoom)
 	if flagBase {
 		url += "&b=1"
 	}
+	filename := fmt.Sprintf("%s/L%02d_%s.png", flagMapDir, flagZoom,
+		time.Now().Format("20060102_150405"))
 
 	done := make(chan struct{})
 	go promptWaiting(done)
-	amap.Shot(url, flagWidth, flagHeight)
+	err = amap.Shot(url, flagWidth, flagHeight, filename)
 	close(done)
+	if err != nil {
+		log.Fatal(err)
+	} else {
+		log.Printf("Traffic map save to: %v", filename)
+	}
 }
 
 func promptWaiting(done <-chan struct{}) {
